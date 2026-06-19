@@ -94,5 +94,6 @@ skips `sbr_simulation` (heavy Gazebo deps).
 ## Git
 
 - Branch: `claude/affectionate-shannon-7f5c8y`.
-- Commit as the repo owner (Lewis Fowler <lewisfowler94@gmail.com>).
+- Commit as `lewisf94 <85638536+lewisf94@users.noreply.github.com>` (the
+  GitHub noreply identity — never put a personal email in commits or files).
 - Do not open a PR unless explicitly asked.

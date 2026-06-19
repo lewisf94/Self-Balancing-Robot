@@ -4,7 +4,7 @@
   <name>sbr_description</name>
   <version>0.1.0</version>
   <description>URDF/xacro model, meshes and RViz config for the self-balancing robot.</description>
-  <maintainer email="lewisfowler94@gmail.com">Lewis Fowler</maintainer>
+  <maintainer email="85638536+lewisf94@users.noreply.github.com">Lewis Fowler</maintainer>
   <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>

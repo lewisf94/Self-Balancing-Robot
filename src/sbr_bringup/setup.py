@@ -19,7 +19,7 @@ setup(
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='Lewis Fowler',
-    maintainer_email='lewisfowler94@gmail.com',
+    maintainer_email='85638536+lewisf94@users.noreply.github.com',
     description='Top-level launch files and parameters for the self-balancing robot.',
     license='MIT',
     entry_points={'console_scripts': []},
