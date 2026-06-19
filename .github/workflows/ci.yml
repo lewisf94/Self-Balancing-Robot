@@ -29,10 +29,13 @@ jobs:
         run: |
           source /opt/ros/jazzy/setup.bash
           rosdep update
+          # ament_python has no rosdep rule (it's provided by colcon-ros and the
+          # ROS install); skip it so resolution doesn't error. rviz2/teleop are
+          # runtime-only and not needed to build or test.
           rosdep install -y --ignore-src \
             --from-paths src/sbr_msgs src/sbr_description src/sbr_control \
                          src/sbr_drivers src/sbr_bringup \
-            --skip-keys "rviz2 teleop_twist_keyboard"
+            --skip-keys "ament_python rviz2 teleop_twist_keyboard"
 
       # --symlink-install keeps the package sources (and their test/ dirs) in the
       # workspace the way the local CLAUDE.md workflow does.
