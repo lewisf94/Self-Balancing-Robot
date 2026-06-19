@@ -10,6 +10,12 @@ jobs:
   build-and-test:
     name: colcon build + test (Jazzy)
     runs-on: ubuntu-24.04
+    # Run inside a clean Noble container. ros-tooling/action-ros-ci expects a
+    # container; on the bare runner the preinstalled system Python shadows
+    # ament_package, so CMake's /usr/bin/python3 can't import it and
+    # find_package(ament_cmake) fails for every package.
+    container:
+      image: ubuntu:noble
     steps:
       - uses: actions/checkout@v4
 
