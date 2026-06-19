@@ -1,0 +1,8 @@
+{
+  "name": "sbr_control",
+  "version": "0.1.0",
+  "description": "Portable, ROS-free balancing control core (sbr_control::BalanceController / Pid). These sources are symlinked from ../../src/sbr_control so the firmware reuses the exact logic built by the ROS 2 node and gtests.",
+  "build": {
+    "flags": ["-I."]
+  }
+}

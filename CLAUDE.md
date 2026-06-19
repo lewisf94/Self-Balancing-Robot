@@ -18,8 +18,9 @@ Target compute: **ESP32-S3** (primary, via micro-ROS) or **Raspberry Pi 3B**
 `sbr_control::BalanceController` and `sbr_control::Pid`
 (`src/sbr_control/include/sbr_control/`, `src/sbr_control/src/pid.cpp`,
 `balance_controller.cpp`) must stay **free of any ROS / rclcpp includes**. This
-is the one piece of logic shared between the Linux/sim node and the (planned)
-ESP32-S3 micro-ROS firmware. Only `balance_controller_node.cpp` may use rclcpp.
+is the one piece of logic shared between the Linux/sim node and the ESP32-S3
+micro-ROS firmware (`firmware/`, which compiles these exact files via the
+`firmware/lib/sbr_control` symlinks). Only `balance_controller_node.cpp` may use rclcpp.
 If you change the control law, update the gtests in
 `src/sbr_control/test/test_balance_controller.cpp`.
 
@@ -49,6 +50,11 @@ There is **no ROS 2 toolchain in this sandbox** — validate with
 `python3 -m py_compile` for Python and rely on CI (`.github/workflows/ci.yml`)
 for the real `colcon build`/`test`. CI builds the core packages on Jazzy and
 skips `sbr_simulation` (heavy Gazebo deps).
+
+The **ESP32-S3 firmware** lives in `firmware/` (PlatformIO + micro-ROS). It is
+built locally with `pio run` (no ESP toolchain in the sandbox) and is ignored by
+colcon/CI via `firmware/COLCON_IGNORE`. It reuses the control core by symlink, so
+gains/pins in `firmware/include/sbr_config.hpp` must track `sbr_params.yaml`.
 
 ## Packages
 
