@@ -44,8 +44,11 @@ BalanceController::Command BalanceController::update(
   const double setpoint = params_.pitch_offset + linear_cmd * params_.lean_per_velocity;
   cmd.pitch_setpoint = setpoint;
 
-  // Inner balance loop. Output is normalized to roughly [-1, 1].
-  const double effort = pitch_pid_.update(setpoint, pitch, pitch_rate, dt);
+  // Inner balance loop. For an inverted pendulum the wheels must drive *toward*
+  // the tilt to get back under the centre of mass, so the stabilising effort is
+  // the negative of a standard set-point-tracking PID output. Result is
+  // normalized to roughly [-1, 1].
+  const double effort = -pitch_pid_.update(setpoint, pitch, pitch_rate, dt);
 
   // Steering: differential effort between the wheels. A positive yaw request
   // (CCW / turn left) drives the right wheel harder than the left.

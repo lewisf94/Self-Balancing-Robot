@@ -96,6 +96,8 @@ ros2 launch sbr_simulation simulation.launch.py
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
 
+Or use the shortcuts: `make deps && make build && make sim` (`make help` lists all).
+
 Tune the gains live in `src/sbr_simulation/config/sim_balance.yaml` —
 see [docs/control_tuning.md](docs/control_tuning.md).
 

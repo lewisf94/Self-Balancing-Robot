@@ -58,6 +58,9 @@ colcon test-result --verbose
 ros2 launch sbr_simulation simulation.launch.py            # add use_rviz:=true
 ```
 
+> **Shortcut:** from the repo root, `make sim` (or `make sim-rviz`) sources ROS
+> and launches for you. `make help` lists every target.
+
 Drive it from another (sourced) terminal:
 
 ```bash
