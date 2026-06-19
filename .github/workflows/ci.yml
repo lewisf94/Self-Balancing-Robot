@@ -10,10 +10,8 @@ jobs:
   build-and-test:
     name: colcon build + test (Jazzy)
     runs-on: ubuntu-24.04
-    # Run inside a clean Noble container. ros-tooling/action-ros-ci expects a
-    # container; on the bare runner the preinstalled system Python shadows
-    # ament_package, so CMake's /usr/bin/python3 can't import it and
-    # find_package(ament_cmake) fails for every package.
+    # Run in a clean Noble container: on the bare runner the preinstalled system
+    # Python shadows ament_package and find_package(ament_cmake) fails.
     container:
       image: ubuntu:noble
     steps:
@@ -23,14 +21,42 @@ jobs:
         with:
           required-ros-distributions: jazzy
 
-      - uses: ros-tooling/action-ros-ci@v0.4
-        with:
-          target-ros2-distro: jazzy
-          # Core packages only. sbr_simulation pulls heavy Gazebo deps and is
-          # validated locally; see docs/simulation.md.
-          package-name: >-
-            sbr_msgs
-            sbr_description
-            sbr_control
-            sbr_drivers
-            sbr_bringup
+      # Build the core packages only. sbr_simulation pulls heavy Gazebo deps and
+      # is validated locally (see docs/simulation.md). firmware/ is ESP-only and
+      # carries a COLCON_IGNORE.
+      - name: Install dependencies (rosdep)
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          rosdep update
+          rosdep install -y --ignore-src \
+            --from-paths src/sbr_msgs src/sbr_description src/sbr_control \
+                         src/sbr_drivers src/sbr_bringup \
+            --skip-keys "rviz2 teleop_twist_keyboard"
+
+      # --symlink-install keeps the package sources (and their test/ dirs) in the
+      # workspace the way the local CLAUDE.md workflow does.
+      - name: Build
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          colcon build --symlink-install \
+            --packages-select sbr_msgs sbr_description sbr_control sbr_drivers sbr_bringup
+
+      - name: Test C++ (sbr_control gtests)
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          colcon test --packages-select sbr_control \
+            --event-handlers console_direct+ --return-code-on-test-failure
+          colcon test-result --verbose
+
+      # Run the ament_python smoke tests with pytest directly, on explicit paths,
+      # so collection can't silently fall back to "0 tests" (colcon's ament_python
+      # discovery did that under action-ros-ci's copy-mode build).
+      - name: Test Python (sbr_drivers, sbr_bringup)
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          source install/setup.bash
+          python3 -m pytest -v src/sbr_drivers/test src/sbr_bringup/test
