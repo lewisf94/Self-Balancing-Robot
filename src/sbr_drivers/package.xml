@@ -17,6 +17,8 @@
   <!-- installed via pip on the robot; see docs/hardware.md. They are not -->
   <!-- listed here so the package builds on machines without I2C/GPIO.    -->
 
+  <test_depend>python3-pytest</test_depend>
+
   <export>
     <build_type>ament_python</build_type>
   </export>
