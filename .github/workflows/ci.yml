@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "claude/**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: colcon build + test (Jazzy)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ros-tooling/setup-ros@v0.7
+        with:
+          required-ros-distributions: jazzy
+
+      - uses: ros-tooling/action-ros-ci@v0.4
+        with:
+          target-ros2-distro: jazzy
+          # Core packages only. sbr_simulation pulls heavy Gazebo deps and is
+          # validated locally; see docs/simulation.md.
+          package-name: >-
+            sbr_msgs
+            sbr_description
+            sbr_control
+            sbr_drivers
+            sbr_bringup

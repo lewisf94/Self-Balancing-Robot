@@ -1,0 +1,13 @@
+# ros_gz_bridge topic mapping (see simulation.launch.py).
+- ros_topic_name: "/clock"
+  gz_topic_name: "/clock"
+  ros_type_name: "rosgraph_msgs/msg/Clock"
+  gz_type_name: "gz.msgs.Clock"
+  direction: GZ_TO_ROS
+
+# MPU6050-equivalent IMU coming from the Gazebo sensor (topic "imu").
+- ros_topic_name: "/imu/data"
+  gz_topic_name: "imu"
+  ros_type_name: "sensor_msgs/msg/Imu"
+  gz_type_name: "gz.msgs.IMU"
+  direction: GZ_TO_ROS

@@ -1,0 +1,22 @@
+# ros2_control configuration loaded by the gz_ros2_control plugin (see
+# sbr_description/urdf/sbr.gazebo.xacro).
+controller_manager:
+  ros__parameters:
+    update_rate: 200          # Hz
+    use_sim_time: true
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    wheel_effort_controller:
+      type: forward_command_controller/ForwardCommandController
+
+# Forwards a Float64MultiArray on
+# /wheel_effort_controller/commands -> wheel joint effort interfaces.
+# The balance controller's /wheel_cmd output is remapped onto this topic.
+wheel_effort_controller:
+  ros__parameters:
+    joints:
+      - left_wheel_joint
+      - right_wheel_joint
+    interface_name: effort

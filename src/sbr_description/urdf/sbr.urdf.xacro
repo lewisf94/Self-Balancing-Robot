@@ -1,0 +1,140 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="sbr">
+
+  <!-- ============================================================= -->
+  <!-- Arguments                                                     -->
+  <!-- ============================================================= -->
+  <!-- use_sim: when true, pull in the Gazebo sensors + ros2_control -->
+  <xacro:arg name="use_sim" default="false"/>
+  <!-- controllers_config: absolute path to a ros2_control YAML,     -->
+  <!-- only used by the Gazebo plugin when use_sim is true.          -->
+  <xacro:arg name="controllers_config" default=""/>
+
+  <!-- ============================================================= -->
+  <!-- Geometry / mass properties                                    -->
+  <!-- The chassis centre of mass sits high above the wheel axle so  -->
+  <!-- the model behaves like a real inverted pendulum.              -->
+  <!-- ============================================================= -->
+  <xacro:property name="body_width"   value="0.10"/>   <!-- y -->
+  <xacro:property name="body_depth"   value="0.07"/>   <!-- x -->
+  <xacro:property name="body_height"  value="0.18"/>   <!-- z -->
+  <xacro:property name="body_mass"    value="0.9"/>
+
+  <xacro:property name="wheel_radius"     value="0.045"/>
+  <xacro:property name="wheel_width"      value="0.025"/>
+  <xacro:property name="wheel_mass"       value="0.15"/>
+  <xacro:property name="wheel_separation" value="0.16"/>
+
+  <xacro:property name="PI" value="3.14159265359"/>
+
+  <!-- ============================================================= -->
+  <!-- Inertia helper macros                                         -->
+  <!-- ============================================================= -->
+  <xacro:macro name="box_inertia" params="m x y z *origin">
+    <inertial>
+      <xacro:insert_block name="origin"/>
+      <mass value="${m}"/>
+      <inertia
+        ixx="${m * (y*y + z*z) / 12.0}" ixy="0.0" ixz="0.0"
+        iyy="${m * (x*x + z*z) / 12.0}" iyz="0.0"
+        izz="${m * (x*x + y*y) / 12.0}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- ============================================================= -->
+  <!-- Materials                                                     -->
+  <!-- ============================================================= -->
+  <material name="chassis_color"><color rgba="0.20 0.40 0.80 1.0"/></material>
+  <material name="wheel_color"><color rgba="0.10 0.10 0.10 1.0"/></material>
+  <material name="imu_color"><color rgba="0.90 0.70 0.10 1.0"/></material>
+
+  <!-- ============================================================= -->
+  <!-- base_link: located at the wheel axle centre                   -->
+  <!-- ============================================================= -->
+  <link name="base_link"/>
+
+  <!-- ============================================================= -->
+  <!-- Chassis (the inverted-pendulum body)                          -->
+  <!-- ============================================================= -->
+  <link name="chassis_link">
+    <visual>
+      <origin xyz="0 0 ${body_height/2.0}" rpy="0 0 0"/>
+      <geometry><box size="${body_depth} ${body_width} ${body_height}"/></geometry>
+      <material name="chassis_color"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${body_height/2.0}" rpy="0 0 0"/>
+      <geometry><box size="${body_depth} ${body_width} ${body_height}"/></geometry>
+    </collision>
+    <xacro:box_inertia m="${body_mass}" x="${body_depth}" y="${body_width}" z="${body_height}">
+      <origin xyz="0 0 ${body_height/2.0}" rpy="0 0 0"/>
+    </xacro:box_inertia>
+  </link>
+  <joint name="chassis_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="chassis_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ============================================================= -->
+  <!-- Wheels (continuous joints about the Y axis)                   -->
+  <!-- ============================================================= -->
+  <xacro:macro name="wheel" params="prefix reflect">
+    <link name="${prefix}_wheel_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="${PI/2.0} 0 0"/>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+        <material name="wheel_color"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="${PI/2.0} 0 0"/>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${wheel_mass}"/>
+        <!-- symmetry axis (spin) is Y -> iyy = m r^2 / 2 -->
+        <inertia
+          ixx="${wheel_mass * (3.0*wheel_radius*wheel_radius + wheel_width*wheel_width) / 12.0}" ixy="0.0" ixz="0.0"
+          iyy="${wheel_mass * wheel_radius*wheel_radius / 2.0}" iyz="0.0"
+          izz="${wheel_mass * (3.0*wheel_radius*wheel_radius + wheel_width*wheel_width) / 12.0}"/>
+      </inertial>
+    </link>
+    <joint name="${prefix}_wheel_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="${prefix}_wheel_link"/>
+      <origin xyz="0 ${reflect * wheel_separation / 2.0} 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <dynamics damping="0.001" friction="0.001"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:wheel prefix="left"  reflect="1"/>
+  <xacro:wheel prefix="right" reflect="-1"/>
+
+  <!-- ============================================================= -->
+  <!-- IMU (fixed near the top of the chassis)                       -->
+  <!-- ============================================================= -->
+  <link name="imu_link">
+    <visual>
+      <geometry><box size="0.02 0.02 0.005"/></geometry>
+      <material name="imu_color"/>
+    </visual>
+    <xacro:box_inertia m="0.01" x="0.02" y="0.02" z="0.005">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </xacro:box_inertia>
+  </link>
+  <joint name="imu_joint" type="fixed">
+    <parent link="chassis_link"/>
+    <child link="imu_link"/>
+    <origin xyz="0 0 ${body_height * 0.6}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ============================================================= -->
+  <!-- Simulation-only: Gazebo sensors + ros2_control                -->
+  <!-- ============================================================= -->
+  <xacro:if value="$(arg use_sim)">
+    <xacro:include filename="$(find sbr_description)/urdf/sbr.gazebo.xacro"/>
+  </xacro:if>
+
+</robot>
