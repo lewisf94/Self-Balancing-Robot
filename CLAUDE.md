@@ -99,7 +99,8 @@ gains/pins in `firmware/include/sbr_config.hpp` must track `sbr_params.yaml`.
 
 ## Git
 
-- Branch: `claude/affectionate-shannon-7f5c8y`.
+- **Do not create new branches unless the user explicitly asks.** Commit to the
+  current branch (`main`, now that the initial PR is merged).
+- **Do not open a PR unless the user explicitly asks.**
 - Commit as `lewisf94 <85638536+lewisf94@users.noreply.github.com>` (the
   GitHub noreply identity — never put a personal email in commits or files).
-- Do not open a PR unless explicitly asked.
