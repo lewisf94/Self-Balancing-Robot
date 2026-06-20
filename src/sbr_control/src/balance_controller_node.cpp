@@ -4,6 +4,7 @@
 #include <string>
 
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp/create_timer.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "std_msgs/msg/float64_multi_array.hpp"
@@ -58,9 +59,11 @@ public:
     state_pub_ = create_publisher<sbr_msgs::msg::BalanceState>("balance_state", 10);
 
     last_cmd_time_ = now();
-    const auto period = std::chrono::duration<double>(1.0 / loop_rate_);
-    timer_ = create_wall_timer(
-      std::chrono::duration_cast<std::chrono::nanoseconds>(period),
+    // Clock-based timer (not create_wall_timer) so the loop honours
+    // use_sim_time in Gazebo; on hardware the node clock is system time.
+    timer_ = rclcpp::create_timer(
+      this, get_clock(),
+      rclcpp::Duration::from_seconds(1.0 / loop_rate_),
       std::bind(&BalanceControllerNode::on_timer, this));
 
     RCLCPP_INFO(get_logger(), "balance_controller_node started at %.1f Hz", loop_rate_);
