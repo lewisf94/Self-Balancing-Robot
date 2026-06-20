@@ -1,0 +1,48 @@
+# Parameters for the real robot (Raspberry Pi + MPU6050 + dual H-bridge + DC
+# motors). Tune the balance gains with the robot held upright first; see
+# docs/control_tuning.md. Pin numbers use BCM numbering -- see docs/hardware.md.
+
+imu_node:
+  ros__parameters:
+    i2c_bus: 1
+    i2c_address: 104          # 0x68
+    frame_id: imu_link
+    publish_rate: 100.0
+    complementary_alpha: 0.98
+    mock: false
+
+motor_node:
+  ros__parameters:
+    mock: false
+    pwm_frequency: 1000
+    max_duty: 1.0
+    deadband: 0.02
+    cmd_timeout: 0.5
+    invert_left: false
+    invert_right: false
+    left_in1: 17
+    left_in2: 27
+    left_pwm: 18
+    right_in1: 22
+    right_in2: 23
+    right_pwm: 13
+    stby: 24                  # TB6612FNG standby/enable (HIGH = on)
+
+balance_controller_node:
+  ros__parameters:
+    loop_rate: 200.0
+    pitch_kp: 6.0
+    pitch_ki: 0.0
+    pitch_kd: 0.4
+    pitch_offset: 0.0         # trim: set to the chassis' balanced tilt [rad]
+    integral_limit: 0.5
+    output_limit: 1.0
+    output_scale: 1.0         # hardware: motor_node treats [-1, 1] as duty
+    fall_threshold: 0.78      # ~45 deg: beyond this the motors are cut (tip-kill)
+    lean_per_velocity: 0.08
+    steer_gain: 0.4
+    cmd_timeout: 0.5
+    invert_pitch: false
+    imu_topic: /imu/data
+    cmd_vel_topic: /cmd_vel
+    wheel_cmd_topic: /wheel_cmd

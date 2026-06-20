@@ -1,0 +1,22 @@
+# Balance controller gains for simulation. In sim the output is fed straight
+# into the wheel effort interface, so output_scale maps the normalized [-1, 1]
+# command onto wheel torque (N*m). Retune for hardware in
+# sbr_bringup/config/sbr_params.yaml -- see docs/control_tuning.md.
+balance_controller_node:
+  ros__parameters:
+    loop_rate: 200.0
+    pitch_kp: 6.0
+    pitch_ki: 0.0
+    pitch_kd: 0.4
+    pitch_offset: 0.0
+    integral_limit: 0.5
+    output_limit: 1.0
+    output_scale: 3.5
+    fall_threshold: 0.78      # ~45 deg tip-kill
+    lean_per_velocity: 0.08
+    steer_gain: 0.4
+    cmd_timeout: 0.5
+    invert_pitch: false
+    imu_topic: /imu/data
+    cmd_vel_topic: /cmd_vel
+    wheel_cmd_topic: /wheel_cmd

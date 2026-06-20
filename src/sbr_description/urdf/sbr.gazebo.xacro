@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- =============================================================== -->
+  <!-- Gazebo material + friction                                      -->
+  <!-- =============================================================== -->
+  <gazebo reference="chassis_link">
+    <material>Gazebo/Blue</material>
+  </gazebo>
+
+  <gazebo reference="left_wheel_link">
+    <mu1>1.2</mu1>
+    <mu2>1.2</mu2>
+    <kp>1e6</kp>
+    <kd>1.0</kd>
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  <gazebo reference="right_wheel_link">
+    <mu1>1.2</mu1>
+    <mu2>1.2</mu2>
+    <kp>1e6</kp>
+    <kd>1.0</kd>
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  <!-- =============================================================== -->
+  <!-- IMU sensor. Publishes on the gz topic "imu", bridged to        -->
+  <!-- /imu/data by ros_gz_bridge (see sbr_simulation/config).        -->
+  <!-- The gz-sim-imu-system plugin is loaded by the world SDF.       -->
+  <!-- =============================================================== -->
+  <gazebo reference="imu_link">
+    <sensor name="imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <update_rate>200</update_rate>
+      <topic>imu</topic>
+      <gz_frame_id>imu_link</gz_frame_id>
+      <enable_metrics>false</enable_metrics>
+    </sensor>
+  </gazebo>
+
+  <!-- =============================================================== -->
+  <!-- ros2_control system backed by Gazebo (effort on each wheel)    -->
+  <!-- =============================================================== -->
+  <ros2_control name="GazeboSimSystem" type="system">
+    <hardware>
+      <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+    </hardware>
+    <joint name="left_wheel_joint">
+      <command_interface name="effort">
+        <param name="min">-5.0</param>
+        <param name="max">5.0</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="right_wheel_joint">
+      <command_interface name="effort">
+        <param name="min">-5.0</param>
+        <param name="max">5.0</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+  </ros2_control>
+
+  <gazebo>
+    <plugin filename="gz_ros2_control-system"
+            name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+      <parameters>$(arg controllers_config)</parameters>
+    </plugin>
+  </gazebo>
+
+</robot>

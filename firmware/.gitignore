@@ -1,0 +1,8 @@
+# PlatformIO build output / caches
+.pio/
+.pioenvs/
+.piolibdeps/
+.vscode/
+*.bin
+*.elf
+*.map
