@@ -90,16 +90,24 @@ opened).
 ### ESP32-S3 (micro-ROS — primary)
 
 The microcontroller runs the balance loop and joins the ROS 2 graph through a
-**micro-ROS agent** on your laptop. Outline (firmware lands in `firmware/`):
+**micro-ROS agent** on your laptop. Full instructions: [firmware/README.md](../firmware/README.md).
+
+Quick summary:
 
 ```bash
-# on the laptop: run the agent (serial transport over USB)
-sudo apt install ros-jazzy-micro-ros-agent       # or build micro_ros_setup
+# 1. Build and flash the firmware (needs PlatformIO installed)
+cd firmware
+pio run --target upload        # compiles + flashes over USB
+
+# 2. On the laptop: start the micro-ROS agent (serial over USB)
+sudo apt install ros-jazzy-micro-ros-agent
 ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyACM0 -b 115200
 ```
 
-The firmware is built with PlatformIO/ESP-IDF using the micro-ROS component and
-links the shared `BalanceController` source. See
+The firmware is built with **PlatformIO + arduino-esp32 v2.x** (pinned in
+`firmware/platformio.ini`). It reuses the same `BalanceController` and `Pid`
+sources as the ROS node via symlinks in `firmware/lib/sbr_control/`, so gains
+tuned in simulation carry over to hardware unchanged. See
 [architecture.md](architecture.md#micro-ros-on-the-esp32-s3-primary-path).
 
 ## Using your Ubuntu laptop as the ground station
