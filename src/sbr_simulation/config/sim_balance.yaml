@@ -7,11 +7,11 @@ balance_controller_node:
     loop_rate: 200.0
     pitch_kp: 6.0
     pitch_ki: 0.0
-    pitch_kd: 0.4
+    pitch_kd: 0.5
     pitch_offset: 0.0
     integral_limit: 0.5
     output_limit: 1.0
-    output_scale: 3.5
+    output_scale: 0.4         # max wheel torque [N*m]; was 3.5 (~35x too hot)
     fall_threshold: 0.78      # ~45 deg tip-kill
     lean_per_velocity: 0.08
     steer_gain: 0.4

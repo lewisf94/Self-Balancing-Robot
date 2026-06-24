@@ -13,3 +13,9 @@ float64 left_effort      # command sent to the left wheel
 float64 right_effort     # command sent to the right wheel
 
 bool balancing           # true while actively balancing; false if fallen / disabled
+
+# Base-link world position [m]. Sim ground truth from Gazebo odometry; 0 on
+# hardware (no encoders / no position sensing).
+float64 pos_x
+float64 pos_y
+float64 pos_z

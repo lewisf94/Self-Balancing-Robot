@@ -11,3 +11,11 @@
   ros_type_name: "sensor_msgs/msg/Imu"
   gz_type_name: "gz.msgs.IMU"
   direction: GZ_TO_ROS
+
+# Ground-truth base odometry from the Gazebo OdometryPublisher (sim only).
+# Used by the controller node for x/y/z telemetry; no hardware equivalent.
+- ros_topic_name: "/odom"
+  gz_topic_name: "/model/sbr/odometry"
+  ros_type_name: "nav_msgs/msg/Odometry"
+  gz_type_name: "gz.msgs.Odometry"
+  direction: GZ_TO_ROS

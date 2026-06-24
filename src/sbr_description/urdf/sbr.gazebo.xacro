@@ -73,4 +73,19 @@
     </plugin>
   </gazebo>
 
+  <!-- =============================================================== -->
+  <!-- Ground-truth odometry (sim only). Publishes the base pose on    -->
+  <!-- the gz topic "/model/sbr/odometry", bridged to /odom. There is  -->
+  <!-- no encoder/odometry on the real robot, so this is sim-only.     -->
+  <!-- =============================================================== -->
+  <gazebo>
+    <plugin filename="gz-sim-odometry-publisher-system"
+            name="gz::sim::systems::OdometryPublisher">
+      <odom_frame>odom</odom_frame>
+      <robot_base_frame>base_link</robot_base_frame>
+      <dimensions>3</dimensions>
+      <odom_publish_frequency>50</odom_publish_frequency>
+    </plugin>
+  </gazebo>
+
 </robot>

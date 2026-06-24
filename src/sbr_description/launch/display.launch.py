@@ -11,6 +11,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition
 from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
@@ -18,7 +19,8 @@ def generate_launch_description():
     xacro_file = os.path.join(pkg, 'urdf', 'sbr.urdf.xacro')
     rviz_config = os.path.join(pkg, 'rviz', 'sbr.rviz')
 
-    robot_description = Command(['xacro ', xacro_file, ' use_sim:=false'])
+    robot_description = ParameterValue(
+        Command(['xacro ', xacro_file, ' use_sim:=false']), value_type=str)
     gui = LaunchConfiguration('gui')
 
     return LaunchDescription([

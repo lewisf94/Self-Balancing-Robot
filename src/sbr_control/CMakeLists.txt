@@ -9,6 +9,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sbr_msgs REQUIRED)
 
@@ -27,7 +28,7 @@ target_compile_features(balance_lib PUBLIC cxx_std_17)
 add_executable(balance_controller_node src/balance_controller_node.cpp)
 target_link_libraries(balance_controller_node balance_lib)
 ament_target_dependencies(balance_controller_node
-  rclcpp sensor_msgs geometry_msgs std_msgs sbr_msgs)
+  rclcpp sensor_msgs geometry_msgs nav_msgs std_msgs sbr_msgs)
 
 install(TARGETS balance_controller_node
   DESTINATION lib/${PROJECT_NAME})

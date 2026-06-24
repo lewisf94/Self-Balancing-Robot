@@ -14,7 +14,7 @@ imu_node:
 motor_node:
   ros__parameters:
     mock: false
-    pwm_frequency: 1000
+    pwm_frequency: 20000
     max_duty: 1.0
     deadband: 0.02
     cmd_timeout: 0.5
