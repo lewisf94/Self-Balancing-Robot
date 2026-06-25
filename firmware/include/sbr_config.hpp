@@ -22,6 +22,8 @@ constexpr double kLoopRateHz  = 200.0;   // balance_controller_node: loop_rate
 constexpr double kCmdTimeoutS = 0.5;     // drop stale /cmd_vel (motor watchdog)
 constexpr bool   kInvertPitch = false;   // flip if the robot drives into its fall
 constexpr int    kTelemetryDivider = 4;  // publish balance_state at loop/4 (~50 Hz)
+constexpr uint32_t kTelemetryPeriodMs =  // derived: ~50 Hz telemetry on core 1
+  static_cast<uint32_t>(1000.0 / (kLoopRateHz / kTelemetryDivider));
 
 // ---- IMU: MPU-6050 on its own I2C bus ---------------------------------------
 constexpr int      kImuSdaPin = 32;

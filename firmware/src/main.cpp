@@ -160,6 +160,11 @@ static void publish_state()
   g_state_msg.left_effort = s.left;
   g_state_msg.right_effort = s.right;
   g_state_msg.balancing = s.balancing;
+  // The robot has no wheel encoders, so there is no position sensing: the
+  // pos_* fields (Gazebo ground truth in sim) are always zero on hardware.
+  g_state_msg.pos_x = 0.0;
+  g_state_msg.pos_y = 0.0;
+  g_state_msg.pos_z = 0.0;
   (void)rcl_publish(&g_state_pub, &g_state_msg, NULL);
 }
 
@@ -285,7 +290,7 @@ void loop()
           AGENT_CONNECTED : AGENT_DISCONNECTED;);
       if (g_state == AGENT_CONNECTED) {
         rclc_executor_spin_some(&g_executor, RCL_MS_TO_NS(2));
-        EXECUTE_EVERY_N_MS(20, publish_state(););   // ~50 Hz telemetry
+        EXECUTE_EVERY_N_MS(sbr_cfg::kTelemetryPeriodMs, publish_state(););
       }
       break;
 
