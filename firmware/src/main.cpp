@@ -126,7 +126,7 @@ static bool create_entities()
   rosidl_runtime_c__String__assign(&g_state_msg.header.frame_id, "base_link");
 
   // Best-effort wall clock for telemetry stamps (no-op if the agent can't sync).
-  rmw_uros_sync_session_time();
+  (void)rmw_uros_sync_session(1000);
   return true;
 }
 
