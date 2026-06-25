@@ -16,7 +16,7 @@ from launch.actions import (
 from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import Command, LaunchConfiguration
+from launch.substitutions import Command, LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
@@ -34,6 +34,7 @@ def generate_launch_description():
     rviz_config = os.path.join(pkg_description, 'rviz', 'sbr.rviz')
 
     use_rviz = LaunchConfiguration('use_rviz')
+    headless = LaunchConfiguration('headless')
 
     robot_description = ParameterValue(Command([
         'xacro ', xacro_file,
@@ -48,10 +49,17 @@ def generate_launch_description():
         parameters=[{'robot_description': robot_description, 'use_sim_time': True}],
     )
 
+    # In headless mode run the Gazebo server only (-s, no GUI) -- useful for CI
+    # and for objective gain tuning where we read telemetry, not pixels.
+    gz_args = [
+        PythonExpression(
+            ["'-s -r -v 4 ' if '", headless, "'.lower() == 'true' else '-r -v 4 '"]),
+        world_file,
+    ]
     gz_sim = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')),
-        launch_arguments={'gz_args': ['-r -v 4 ', world_file]}.items(),
+        launch_arguments={'gz_args': gz_args}.items(),
     )
 
     spawn_robot = Node(
@@ -99,6 +107,8 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('use_rviz', default_value='false',
                               description='Open RViz alongside Gazebo'),
+        DeclareLaunchArgument('headless', default_value='false',
+                              description='Run Gazebo server-only (no GUI)'),
 
         robot_state_publisher,
         gz_sim,
