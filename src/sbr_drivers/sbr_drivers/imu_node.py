@@ -41,6 +41,7 @@ class ImuNode(Node):
         self.declare_parameter('complementary_alpha', 0.98)
         self.declare_parameter('mock', False)
         self.declare_parameter('max_read_failures', 10)
+        self.declare_parameter('calibration_samples', 200)
 
         self._frame_id = self.get_parameter('frame_id').value
         self._alpha = self.get_parameter('complementary_alpha').value
@@ -66,6 +67,13 @@ class ImuNode(Node):
                     bus=self.get_parameter('i2c_bus').value,
                     address=self.get_parameter('i2c_address').value,
                 )
+                n = self.get_parameter('calibration_samples').value
+                if n > 0:
+                    self.get_logger().info(
+                        f'Calibrating gyro bias ({n} samples) - keep the robot still...')
+                    bias = self._sensor.calibrate_gyro(samples=n)
+                    self.get_logger().info(
+                        f'Gyro bias [rad/s]: {bias[0]:+.4f} {bias[1]:+.4f} {bias[2]:+.4f}')
             except Exception as exc:  # pragma: no cover - hardware path
                 self.get_logger().error(
                     f'Could not open MPU6050 ({exc}); falling back to mock mode.')

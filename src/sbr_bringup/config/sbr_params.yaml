@@ -9,6 +9,7 @@ imu_node:
     frame_id: imu_link
     publish_rate: 100.0
     complementary_alpha: 0.98
+    calibration_samples: 200  # gyro-bias average at startup (robot stationary)
     mock: false
 
 motor_node:

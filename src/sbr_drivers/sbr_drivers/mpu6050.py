@@ -13,6 +13,7 @@ _CONFIG = 0x1A
 _GYRO_CONFIG = 0x1B
 _ACCEL_CONFIG = 0x1C
 _ACCEL_XOUT_H = 0x3B
+_WHO_AM_I = 0x75
 
 # --- Full-scale ranges (default config below) --------------------------------
 _ACCEL_SCALE_2G = 16384.0   # LSB / g     at +-2g
@@ -28,6 +29,14 @@ class Mpu6050:
         from smbus2 import SMBus  # lazy import - hardware only
         self._address = address
         self._bus = SMBus(bus)
+        self._gyro_bias = (0.0, 0.0, 0.0)
+        # Identity check: catches a missing/mis-wired device (or a different
+        # chip squatting on 0x68) before we trust its data.
+        whoami = self._bus.read_byte_data(self._address, _WHO_AM_I)
+        if whoami != 0x68:
+            raise RuntimeError(
+                f'MPU6050 WHO_AM_I mismatch: got 0x{whoami:02x}, expected 0x68 '
+                '(check wiring/AD0; some clones report other values)')
         # Wake the device (clear sleep bit).
         self._bus.write_byte_data(self._address, _PWR_MGMT_1, 0x00)
         # 1 kHz sample rate, ~44 Hz DLPF, +-2g, +-250 deg/s.
@@ -36,8 +45,8 @@ class Mpu6050:
         self._bus.write_byte_data(self._address, _GYRO_CONFIG, 0x00)
         self._bus.write_byte_data(self._address, _ACCEL_CONFIG, 0x00)
 
-    def read(self):
-        """Return (ax, ay, az [m/s^2], gx, gy, gz [rad/s])."""
+    def _read_raw(self):
+        """Return uncorrected (ax, ay, az [m/s^2], gx, gy, gz [rad/s])."""
         raw = self._bus.read_i2c_block_data(self._address, _ACCEL_XOUT_H, 14)
         ax, ay, az, _temp, gx, gy, gz = struct.unpack('>hhhhhhh', bytes(raw))
         return (
@@ -48,6 +57,30 @@ class Mpu6050:
             gy / _GYRO_SCALE_250 * _DEG2RAD,
             gz / _GYRO_SCALE_250 * _DEG2RAD,
         )
+
+    def read(self):
+        """Return (ax, ay, az [m/s^2], gx, gy, gz [rad/s]), bias-corrected."""
+        ax, ay, az, gx, gy, gz = self._read_raw()
+        bx, by, bz = self._gyro_bias
+        return (ax, ay, az, gx - bx, gy - by, gz - bz)
+
+    def calibrate_gyro(self, samples=200, delay_s=0.002):
+        """Average the gyro output at rest. The robot MUST be stationary.
+
+        Raw gyros have a constant bias that the complementary filter
+        integrates into a steady pitch drift; subtracting a startup average
+        removes it.
+        """
+        import time
+        sx = sy = sz = 0.0
+        for _ in range(samples):
+            _, _, _, gx, gy, gz = self._read_raw()
+            sx += gx
+            sy += gy
+            sz += gz
+            time.sleep(delay_s)
+        self._gyro_bias = (sx / samples, sy / samples, sz / samples)
+        return self._gyro_bias
 
     def close(self):
         try:
