@@ -16,6 +16,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition
 from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
@@ -29,7 +30,8 @@ def generate_launch_description():
     params_file = LaunchConfiguration('params_file')
     use_rviz = LaunchConfiguration('use_rviz')
 
-    robot_description = Command(['xacro ', xacro_file, ' use_sim:=false'])
+    robot_description = ParameterValue(
+        Command(['xacro ', xacro_file, ' use_sim:=false']), value_type=str)
 
     return LaunchDescription([
         DeclareLaunchArgument('params_file', default_value=default_params,
@@ -41,12 +43,14 @@ def generate_launch_description():
              output='screen',
              parameters=[{'robot_description': robot_description}]),
 
+        # respawn: a crashed driver/controller must not silently end balancing.
         Node(package='sbr_drivers', executable='imu_node', output='screen',
-             parameters=[params_file]),
+             parameters=[params_file], respawn=True, respawn_delay=2.0),
         Node(package='sbr_drivers', executable='motor_node', output='screen',
-             parameters=[params_file]),
+             parameters=[params_file], respawn=True, respawn_delay=2.0),
         Node(package='sbr_control', executable='balance_controller_node',
-             output='screen', parameters=[params_file]),
+             output='screen', parameters=[params_file],
+             respawn=True, respawn_delay=2.0),
 
         Node(package='rviz2', executable='rviz2', arguments=['-d', rviz_config],
              condition=IfCondition(use_rviz)),
