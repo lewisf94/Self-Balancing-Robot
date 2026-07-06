@@ -16,6 +16,7 @@ balance_controller_node:
     lean_per_velocity: 0.08
     steer_gain: 0.4
     cmd_timeout: 0.5
+    imu_timeout: 0.2          # stale-IMU watchdog: zero motors past this age
     invert_pitch: false
     imu_topic: /imu/data
     cmd_vel_topic: /cmd_vel

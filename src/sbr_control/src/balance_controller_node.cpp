@@ -38,6 +38,7 @@ public:
     controller_.set_params(params_);
 
     cmd_timeout_ = declare_parameter<double>("cmd_timeout", 0.5);
+    imu_timeout_ = declare_parameter<double>("imu_timeout", 0.2);
     invert_pitch_ = declare_parameter<bool>("invert_pitch", false);
     log_state_ = declare_parameter<bool>("log_state", true);
 
@@ -62,6 +63,7 @@ public:
       std::bind(&BalanceControllerNode::on_set_params, this, std::placeholders::_1));
 
     last_cmd_time_ = now();
+    last_imu_time_ = now();
     timer_ = rclcpp::create_timer(
       this, get_clock(),
       rclcpp::Duration::from_seconds(1.0 / loop_rate_),
@@ -82,6 +84,15 @@ private:
 
   void on_imu(const sensor_msgs::msg::Imu::SharedPtr msg)
   {
+    // Degraded-IMU convention: a negative orientation covariance marks the
+    // sample as unusable for control (e.g. imu_node fell back to mock after
+    // a hardware failure). Skip it so the freshness watchdog can trip.
+    if (msg->orientation_covariance[0] < 0.0) {
+      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000,
+        "Ignoring IMU sample flagged invalid (orientation_covariance[0] < 0)");
+      return;
+    }
+
     double pitch = pitch_from_quaternion(msg->orientation);
     double pitch_rate = msg->angular_velocity.y;
     if (invert_pitch_) {
@@ -91,6 +102,7 @@ private:
     pitch_ = pitch;
     pitch_rate_ = pitch_rate;
     have_imu_ = true;
+    last_imu_time_ = now();
   }
 
   void on_cmd_vel(const geometry_msgs::msg::Twist::SharedPtr msg)
@@ -110,6 +122,25 @@ private:
   void on_timer()
   {
     if (!have_imu_) {
+      return;
+    }
+
+    // IMU-freshness watchdog: a frozen IMU must not leave the last wheel
+    // command standing. Publish an explicit zero (motor_node's watchdog only
+    // trips on command ABSENCE, and the sim effort controller holds values).
+    if ((now() - last_imu_time_).seconds() > imu_timeout_) {
+      controller_.reset();
+      std_msgs::msg::Float64MultiArray stop_msg;
+      stop_msg.data = {0.0, 0.0};
+      wheel_pub_->publish(stop_msg);
+      sbr_msgs::msg::BalanceState state;
+      state.header.stamp = now();
+      state.header.frame_id = "base_link";
+      state.pitch = pitch_;
+      state.balancing = false;
+      state_pub_->publish(state);
+      RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 2000,
+        "IMU data stale (> %.2f s) - motors commanded to zero", imu_timeout_);
       return;
     }
 
@@ -179,6 +210,8 @@ private:
         params_.lean_per_velocity = p.as_double();
       } else if (name == "steer_gain") {
         params_.steer_gain = p.as_double();
+      } else if (name == "imu_timeout") {
+        imu_timeout_ = p.as_double();
       } else if (name == "log_state") {
         log_state_ = p.as_bool();
       }
@@ -194,6 +227,7 @@ private:
   BalanceController::Params params_;
   double loop_rate_{200.0};
   double cmd_timeout_{0.5};
+  double imu_timeout_{0.2};
   bool invert_pitch_{false};
   bool log_state_{true};
 
@@ -206,6 +240,7 @@ private:
   double pos_z_{0.0};
   bool have_imu_{false};
   rclcpp::Time last_cmd_time_;
+  rclcpp::Time last_imu_time_;
 
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
