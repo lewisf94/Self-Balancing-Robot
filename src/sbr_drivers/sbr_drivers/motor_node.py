@@ -85,7 +85,8 @@ class MotorNode(Node):
     def __init__(self):
         super().__init__('motor_node')
         self.declare_parameter('mock', False)
-        self.declare_parameter('pwm_frequency', 1000)
+        # 20 kHz: above hearing -- 1 kHz makes the motors whine (docs/hardware.md).
+        self.declare_parameter('pwm_frequency', 20000)
         self.declare_parameter('max_duty', 1.0)
         self.declare_parameter('deadband', 0.02)
         self.declare_parameter('cmd_timeout', 0.5)
@@ -144,14 +145,17 @@ class MotorNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = MotorNode()
+    node = None
     try:
+        node = MotorNode()
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
     finally:
-        node._backend.close()
-        node.destroy_node()
+        if node is not None:
+            if getattr(node, '_backend', None) is not None:
+                node._backend.close()
+            node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()
 

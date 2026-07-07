@@ -46,11 +46,14 @@ class ImuNode(Node):
         self._frame_id = self.get_parameter('frame_id').value
         self._alpha = self.get_parameter('complementary_alpha').value
         self._rate = self.get_parameter('publish_rate').value
+        if self._rate <= 0:
+            raise ValueError(f'publish_rate must be > 0 (got {self._rate})')
         self._mock = self.get_parameter('mock').value
         self._max_read_failures = self.get_parameter('max_read_failures').value
 
         self._roll = 0.0
         self._pitch = 0.0
+        self._last_tick = None
         self._sensor = None
         # Degraded-mode tracking. _fallback latches when the sensor could not
         # be opened and we auto-switched to mock (a hardware fault the operator
@@ -122,7 +125,16 @@ class ImuNode(Node):
                 'motors will be cut by the controller watchdog.',
                 throttle_duration_sec=10.0)
 
-        dt = 1.0 / self._rate
+        # Measured dt (clamped): timer jitter or a slow I2C read would
+        # otherwise skew the gyro integration, which assumes the period.
+        nominal_dt = 1.0 / self._rate
+        tick_now = self.get_clock().now()
+        if self._last_tick is None:
+            dt = nominal_dt
+        else:
+            dt = (tick_now - self._last_tick).nanoseconds * 1e-9
+            dt = max(0.25 * nominal_dt, min(dt, 4.0 * nominal_dt))
+        self._last_tick = tick_now
         # Tilt estimate from gravity vector.
         acc_roll = math.atan2(ay, az)
         acc_pitch = math.atan2(-ax, math.sqrt(ay * ay + az * az))
@@ -156,15 +168,17 @@ class ImuNode(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = ImuNode()
+    node = None
     try:
+        node = ImuNode()
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
     finally:
-        if node._sensor is not None:
-            node._sensor.close()
-        node.destroy_node()
+        if node is not None:
+            if getattr(node, '_sensor', None) is not None:
+                node._sensor.close()
+            node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()
 

@@ -1,6 +1,8 @@
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -24,6 +26,10 @@ public:
   : rclcpp::Node("balance_controller_node")
   {
     loop_rate_ = declare_parameter<double>("loop_rate", 200.0);
+    if (loop_rate_ <= 0.0) {
+      RCLCPP_FATAL(get_logger(), "loop_rate must be > 0 (got %.3f)", loop_rate_);
+      throw std::invalid_argument("loop_rate must be > 0");
+    }
 
     params_.pitch_gains.kp = declare_parameter<double>("pitch_kp", 6.0);
     params_.pitch_gains.ki = declare_parameter<double>("pitch_ki", 0.0);
@@ -149,7 +155,17 @@ private:
       angular_cmd_ = 0.0;
     }
 
-    const double dt = 1.0 / loop_rate_;
+    // Measured dt (clamped): timer jitter or a slow cycle would otherwise
+    // corrupt the PID integral, which assumes the nominal period.
+    const double nominal_dt = 1.0 / loop_rate_;
+    const rclcpp::Time step_now = now();
+    double dt = nominal_dt;
+    if (last_step_time_.nanoseconds() > 0) {
+      dt = (step_now - last_step_time_).seconds();
+      dt = std::max(0.25 * nominal_dt, std::min(dt, 4.0 * nominal_dt));
+    }
+    last_step_time_ = step_now;
+
     const auto cmd = controller_.update(pitch_, pitch_rate_, linear_cmd_, angular_cmd_, dt);
 
     std_msgs::msg::Float64MultiArray wheel_msg;
@@ -241,6 +257,7 @@ private:
   bool have_imu_{false};
   rclcpp::Time last_cmd_time_;
   rclcpp::Time last_imu_time_;
+  rclcpp::Time last_step_time_{0, 0, RCL_ROS_TIME};
 
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_sub_;
