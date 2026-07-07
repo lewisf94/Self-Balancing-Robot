@@ -40,6 +40,8 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   ament_add_gtest(test_balance test/test_balance_controller.cpp)
   target_link_libraries(test_balance balance_lib)
+  ament_add_gtest(test_pid test/test_pid.cpp)
+  target_link_libraries(test_pid balance_lib)
 endif()
 
 ament_package()

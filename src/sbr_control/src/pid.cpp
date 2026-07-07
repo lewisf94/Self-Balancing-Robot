@@ -28,8 +28,12 @@ double Pid::update(double setpoint, double measurement, double derivative, doubl
   // (locally) constant setpoint.
   const double d_term = gains_.kd * (-derivative);
 
-  // Tentative integral with clamping.
-  double integral = integral_ + error * dt;
+  // Tentative integral with clamping. Non-positive dt (clock glitch, first
+  // sample) must not corrupt the accumulator; P and D are dt-independent.
+  double integral = integral_;
+  if (dt > 0.0) {
+    integral += error * dt;
+  }
   integral = clamp(integral, -gains_.integral_limit, gains_.integral_limit);
 
   const double output = gains_.kp * error + gains_.ki * integral + d_term;
