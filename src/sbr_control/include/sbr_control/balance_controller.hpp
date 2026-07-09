@@ -25,6 +25,7 @@ public:
     double pitch_offset{0.0};        ///< trim added to the setpoint [rad]
     double output_scale{1.0};        ///< maps normalized effort -> output units
     double fall_threshold{0.78};     ///< |pitch| beyond this cuts the motors [rad] (~45 deg)
+    double recover_threshold{0.4};   ///< |pitch| must drop below this to re-arm after a fall [rad]
     double lean_per_velocity{0.08};  ///< setpoint lean per (m/s) forward request
     double steer_gain{0.4};          ///< differential effort per (rad/s) yaw request
   };
@@ -58,6 +59,7 @@ public:
 private:
   Params params_{};
   Pid pitch_pid_{};
+  bool fallen_{false};   ///< tip-kill latch; clears below recover_threshold
 };
 
 }  // namespace sbr_control

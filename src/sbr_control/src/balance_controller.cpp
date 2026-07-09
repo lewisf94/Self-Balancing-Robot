@@ -26,7 +26,11 @@ void BalanceController::set_params(const Params & params)
   pitch_pid_.set_gains(params_.pitch_gains);
 }
 
-void BalanceController::reset() {pitch_pid_.reset();}
+void BalanceController::reset()
+{
+  pitch_pid_.reset();
+  fallen_ = false;
+}
 
 BalanceController::Command BalanceController::update(
   double pitch, double pitch_rate, double linear_cmd, double angular_cmd, double dt)
@@ -34,8 +38,17 @@ BalanceController::Command BalanceController::update(
   Command cmd;
   cmd.pitch_setpoint = params_.pitch_offset;
 
-  // Safety: if the robot has fallen, cut the motors and reset the integrator.
-  if (std::fabs(pitch) > params_.fall_threshold) {
+  // Safety: tip-kill with hysteresis. Falling past fall_threshold latches the
+  // cut; the robot must come back within recover_threshold to re-arm, so a
+  // chassis teetering at the boundary cannot chatter the motors on and off.
+  const double abs_pitch = std::fabs(pitch);
+  if (!fallen_ && abs_pitch > params_.fall_threshold) {
+    fallen_ = true;
+  } else if (fallen_ && abs_pitch < params_.recover_threshold) {
+    fallen_ = false;
+    pitch_pid_.reset();
+  }
+  if (fallen_) {
     pitch_pid_.reset();
     return cmd;
   }

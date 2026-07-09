@@ -40,6 +40,7 @@ balance_controller_node:
     output_limit: 1.0
     output_scale: 1.0         # hardware: motor_node treats [-1, 1] as duty
     fall_threshold: 0.78      # ~45 deg: beyond this the motors are cut (tip-kill)
+    recover_threshold: 0.4    # re-arm hysteresis: must come back within ~23 deg
     lean_per_velocity: 0.08
     steer_gain: 0.4
     cmd_timeout: 0.5

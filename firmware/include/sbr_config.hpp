@@ -62,6 +62,7 @@ inline sbr_control::BalanceController::Params make_params()
   p.pitch_offset = 0.0;        // trim: the chassis' balanced tilt [rad]
   p.output_scale = 1.0;        // hardware: [-1, 1] maps straight to motor duty
   p.fall_threshold = 0.78;     // ~45 deg tip-kill
+  p.recover_threshold = 0.4;   // re-arm hysteresis (~23 deg)
   p.lean_per_velocity = 0.08;
   p.steer_gain = 0.4;
   return p;

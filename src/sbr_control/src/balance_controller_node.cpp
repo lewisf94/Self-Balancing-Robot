@@ -39,6 +39,7 @@ public:
     params_.pitch_offset = declare_parameter<double>("pitch_offset", 0.0);
     params_.output_scale = declare_parameter<double>("output_scale", 1.0);
     params_.fall_threshold = declare_parameter<double>("fall_threshold", 0.78);
+    params_.recover_threshold = declare_parameter<double>("recover_threshold", 0.4);
     params_.lean_per_velocity = declare_parameter<double>("lean_per_velocity", 0.08);
     params_.steer_gain = declare_parameter<double>("steer_gain", 0.4);
     controller_.set_params(params_);
@@ -222,6 +223,8 @@ private:
         params_.output_scale = p.as_double();
       } else if (name == "fall_threshold") {
         params_.fall_threshold = p.as_double();
+      } else if (name == "recover_threshold") {
+        params_.recover_threshold = p.as_double();
       } else if (name == "lean_per_velocity") {
         params_.lean_per_velocity = p.as_double();
       } else if (name == "steer_gain") {
